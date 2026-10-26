@@ -1,0 +1,28 @@
+{
+  "name": "hrumapp",
+  "version": "1.0.0",
+  "description": "Hrum Browser",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "author": "Твое Имя",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.hrum.browser",
+    "productName": "Hrum",
+    "win": {
+      "target": "nsis",
+      "icon": "hrum.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hrum</title>
+  <style>
+    :root {
+      --bg-color: #202124; --toolbar-bg: #292a2d; --text-color: #e8eaed;
+      --border-color: #3c4043; --input-bg: #202124; --button-bg: #3c4043;
+      --button-hover: #4a4d51; --accent: #8ab4f8;
+    }
+    [data-theme="light"] {
+      --bg-color: #f1f3f4; --toolbar-bg: #ffffff; --text-color: #202124;
+      --border-color: #dadce0; --input-bg: #f1f3f4; --button-bg: #f1f3f4;
+      --button-hover: #e8eaed; --accent: #1a73e8;
+    }
+    [data-theme="hamster"] {
+      --bg-color: #fdf5e6; --toolbar-bg: #ffe4b5; --text-color: #5c4033;
+      --border-color: #deb887; --input-bg: #fff8dc; --button-bg: #f5deb3;
+      --button-hover: #deb887; --accent: #d2691e;
+    }
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); overflow: hidden; transition: background 0.3s; }
+    .tabs-bar { background: var(--toolbar-bg); padding: 8px 10px 0 10px; display: flex; align-items: flex-end; gap: 5px; border-bottom: 1px solid var(--border-color); overflow-x: auto; }
+    .tab { background: var(--bg-color); padding: 8px 15px; border-radius: 8px 8px 0 0; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); border-bottom: none; display: flex; align-items: center; gap: 10px; min-width: 120px; max-width: 200px; white-space: nowrap; overflow: hidden; }
+    .tab.active { background: var(--toolbar-bg); font-weight: bold; }
+    .tab-title { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+    .tab-close { font-size: 12px; cursor: pointer; opacity: 0.5; }
+    .tab-close:hover { opacity: 1; color: red; }
+    .add-tab { background: transparent; border: none; color: var(--text-color); font-size: 20px; cursor: pointer; padding: 0 10px; margin-bottom: 5px; }
+    .toolbar { padding: 8px 10px; background: var(--toolbar-bg); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); }
+    button { padding: 8px 12px; border: none; background: var(--button-bg); color: var(--text-color); border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    button:hover { background: var(--button-hover); }
+    #url { flex: 1; padding: 8px 15px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); border-radius: 20px; outline: none; font-size: 14px; }
+    .content-area { position: relative; width: 100%; height: calc(100vh - 95px); }
+    webview { width: 100%; height: 100%; border: none; display: none; }
+    webview.active { display: flex; }
+    .icon-btn { font-size: 16px; padding: 6px 10px; }
+    .settings-panel { display: none; position: absolute; top: 100px; right: 20px; background: var(--toolbar-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100; width: 200px; }
+    .theme-btn { display: block; width: 100%; margin-bottom: 8px; text-align: left; }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="tabs-bar" id="tabsBar">
+    <button class="add-tab" onclick="createTab('https://www.google.com')" title="Новая вкладка">+</button>
+  </div>
+
+  <div class="toolbar">
+    <button class="icon-btn" onclick="goBack()">←</button>
+    <button class="icon-btn" onclick="goForward()">→</button>
+    <button class="icon-btn" onclick="reloadPage()">⟳</button>
+    <button class="icon-btn" onclick="goHome()">🏠</button>
+    <input type="text" id="url" placeholder="Поиск в Google или адрес..." onkeypress="handleKeyPress(event)">
+    <button onclick="navigate()">Перейти</button>
+    <button class="icon-btn" onclick="toggleSettings()">⚙️</button>
+  </div>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h3>Темы</h3>
+    <button class="theme-btn" onclick="setTheme('dark')">🌙 Тёмная</button>
+    <button class="theme-btn" onclick="setTheme('light')">☀️ Светлая</button>
+    <button class="theme-btn" onclick="setTheme('hamster')">🐹 Хомячья</button>
+  </div>
+
+  <div class="content-area" id="contentArea"></div>
+
+  <script>
+    let tabCount = 0;
+    const tabsBar = document.getElementById('tabsBar');
+    const contentArea = document.getElementById('contentArea');
+    const urlInput = document.getElementById('url');
+    const settingsPanel = document.getElementById('settingsPanel');
+    let activeTabId = null;
+
+    function createTab(url) {
+      tabCount++;
+      const tabId = 'tab-' + tabCount;
+      
+      // Создаем визуальную вкладку
+      const tabEl = document.createElement('div');
+      tabEl.className = 'tab';
+      tabEl.id = 'tab-el-' + tabId;
+      tabEl.innerHTML = `<span class="tab-title" id="title-${tabId}">Загрузка...</span><span class="tab-close" onclick="closeTab('${tabId}', event)">✕</span>`;
+      tabEl.onclick = () => switchTab(tabId);
+      tabsBar.insertBefore(tabEl, tabsBar.lastElementChild);
+
+      // Создаем webview
+      const webview = document.createElement('webview');
+      webview.id = tabId;
+      webview.src = url;
+      
+      // Слушаем события, чтобы менять название и URL
+      webview.addEventListener('did-navigate', (e) => {
+        if (activeTabId === tabId) urlInput.value = e.url;
+      });
+      
+      webview.addEventListener('page-title-updated', (e) => {
+        document.getElementById('title-' + tabId).innerText = e.title;
+      });
+
+      contentArea.appendChild(webview);
+      switchTab(tabId);
+    }
+
+    function switchTab(tabId) {
+      // Убираем активный класс со всех
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('webview').forEach(w => w.classList.remove('active'));
+      
+      // Ставим активный
+      document.getElementById('tab-el-' + tabId).classList.add('active');
+      const webview = document.getElementById(tabId);
+      webview.classList.add('active');
+      
+      // Обновляем адресную строку
+      urlInput.value = webview.getURL() || webview.src;
+      activeTabId = tabId;
+    }
+
+    function closeTab(tabId, event) {
+      event.stopPropagation(); // Чтобы не переключилось на закрываемую вкладку
+      const tabEl = document.getElementById('tab-el-' + tabId);
+      const webview = document.getElementById(tabId);
+      tabEl.remove();
+      webview.remove();
+      
+      // Если закрыли активную, переключаемся на первую попавшуюся
+      if (activeTabId === tabId) {
+        const remainingTabs = document.querySelectorAll('.tab');
+        if (remainingTabs.length > 0) {
+          switchTab(remainingTabs[0].id.replace('tab-el-', ''));
+        } else {
+          createTab('https://www.google.com');
+        }
+      }
+    }
+
+    function navigate() {
+      const val = urlInput.value.trim();
+      const webview = document.getElementById(activeTabId);
+      if (!val || !webview) return;
+
+      if (val.startsWith('http')) webview.src = val;
+      else if (val.includes('.') && !val.includes(' ')) webview.src = 'https://' + val;
+      else webview.src = 'https://www.google.com/search?q=' + encodeURIComponent(val);
+    }
+
+    function handleKeyPress(e) { if (e.key === 'Enter') navigate(); }
+    
+    function goBack() { const w = document.getElementById(activeTabId); if (w && w.canGoBack()) w.goBack(); }
+    function goForward() { const w = document.getElementById(activeTabId); if (w && w.canGoForward()) w.goForward(); }
+    function reloadPage() { const w = document.getElementById(activeTabId); if (w) w.reload(); }
+    function goHome() { const w = document.getElementById(activeTabId); if (w) w.src = 'https://www.google.com'; }
+
+    function toggleSettings() {
+      settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function setTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      settingsPanel.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(event) {
+      if (!settingsPanel.contains(event.target) && !event.target.closest('button[title="Настройки"]') && event.target.innerHTML !== '⚙️') {
+        settingsPanel.style.display = 'none';
+      }
+    });
+
+    // Создаем первую вкладку при запуске
+    window.onload = () => createTab('https://www.google.com');
+  </script>
+</body>
+</html>
