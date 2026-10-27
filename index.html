@@ -19,6 +19,7 @@
       --button-hover: #deb887; --accent: #d2691e;
     }
     body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); overflow: hidden; transition: background 0.3s; }
+    
     .tabs-bar { background: var(--toolbar-bg); padding: 8px 10px 0 10px; display: flex; align-items: flex-end; gap: 5px; border-bottom: 1px solid var(--border-color); overflow-x: auto; }
     .tab { background: var(--bg-color); padding: 8px 15px; border-radius: 8px 8px 0 0; font-size: 13px; cursor: pointer; border: 1px solid var(--border-color); border-bottom: none; display: flex; align-items: center; gap: 10px; min-width: 120px; max-width: 200px; white-space: nowrap; overflow: hidden; }
     .tab.active { background: var(--toolbar-bg); font-weight: bold; }
@@ -26,38 +27,80 @@
     .tab-close { font-size: 12px; cursor: pointer; opacity: 0.5; }
     .tab-close:hover { opacity: 1; color: red; }
     .add-tab { background: transparent; border: none; color: var(--text-color); font-size: 20px; cursor: pointer; padding: 0 10px; margin-bottom: 5px; }
+
     .toolbar { padding: 8px 10px; background: var(--toolbar-bg); display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-color); }
-    button { padding: 8px 12px; border: none; background: var(--button-bg); color: var(--text-color); border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+    button { padding: 8px 12px; border: none; background: var(--button-bg); color: var(--text-color); border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.2s; display: flex; align-items: center; justify-content: center; }
     button:hover { background: var(--button-hover); }
-    #url { flex: 1; padding: 8px 15px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); border-radius: 20px; outline: none; font-size: 14px; }
+    
+    .url-container { flex: 1; display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 25px; padding: 2px 15px; margin: 0 10px; transition: border 0.3s, box-shadow 0.3s; }
+    .url-container:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2); }
+    .url-icon { font-size: 14px; opacity: 0.6; margin-right: 8px; }
+    #url { flex: 1; padding: 8px 0; border: none; background: transparent; color: var(--text-color); outline: none; font-size: 14px; }
+    
+    .icon-btn { font-size: 16px; padding: 6px 10px; }
+
     .content-area { position: relative; width: 100%; height: calc(100vh - 95px); }
     webview { width: 100%; height: 100%; border: none; display: none; }
     webview.active { display: flex; }
-    .icon-btn { font-size: 16px; padding: 6px 10px; }
-    .settings-panel { display: none; position: absolute; top: 100px; right: 20px; background: var(--toolbar-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100; width: 200px; }
+
+    .settings-panel { display: none; position: absolute; top: 100px; right: 20px; background: var(--toolbar-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 100; width: 250px; }
+    .settings-panel h3 { margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .setting-item { margin-bottom: 15px; display: flex; flex-direction: column; gap: 5px; }
+    .setting-item label { font-size: 13px; opacity: 0.8; }
+    .setting-item select { padding: 6px; border-radius: 5px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); outline: none; }
     .theme-btn { display: block; width: 100%; margin-bottom: 8px; text-align: left; }
+    .reset-btn { background: #d93025; color: white; width: 100%; margin-top: 10px; }
+    .reset-btn:hover { background: #b3271e; }
   </style>
 </head>
 <body data-theme="dark">
+  
   <div class="tabs-bar" id="tabsBar">
-    <button class="add-tab" onclick="createTab('https://www.google.com')" title="Новая вкладка">+</button>
+    <button class="add-tab" onclick="createTab(getStartPage())" title="Новая вкладка">+</button>
   </div>
 
   <div class="toolbar">
-    <button class="icon-btn" onclick="goBack()">←</button>
-    <button class="icon-btn" onclick="goForward()">→</button>
-    <button class="icon-btn" onclick="reloadPage()">⟳</button>
-    <button class="icon-btn" onclick="goHome()">🏠</button>
-    <input type="text" id="url" placeholder="Поиск в Google или адрес..." onkeypress="handleKeyPress(event)">
+    <button class="icon-btn" onclick="goBack()" title="Назад">←</button>
+    <button class="icon-btn" onclick="goForward()" title="Вперед">→</button>
+    <button class="icon-btn" onclick="reloadPage()" title="Обновить">⟳</button>
+    <button class="icon-btn" onclick="goHome()" title="На главную Hrum" style="font-weight: bold; font-size: 18px;">H</button>
+    
+    <div class="url-container">
+      <span class="url-icon">🔍</span>
+      <input type="text" id="url" placeholder="Введите адрес или поисковый запрос..." onkeypress="handleKeyPress(event)">
+    </div>
+    
     <button onclick="navigate()">Перейти</button>
-    <button class="icon-btn" onclick="toggleSettings()">⚙️</button>
+    <button class="icon-btn" onclick="toggleSettings()" title="Настройки">⚙️</button>
   </div>
 
   <div class="settings-panel" id="settingsPanel">
-    <h3>Темы</h3>
+    <h3>Настройки</h3>
+    
+    <div class="setting-item">
+      <label>Поисковая система</label>
+      <select id="searchEngineSelect" onchange="changeSearchEngine(this.value)">
+        <option value="google">Google</option>
+        <option value="duckduckgo">DuckDuckGo</option>
+        <option value="yandex">Яндекс</option>
+      </select>
+    </div>
+
+    <div class="setting-item">
+      <label>Стартовая страница</label>
+      <select id="startPageSelect" onchange="changeStartPage(this.value)">
+        <option value="start.html">Hrum Search</option>
+        <option value="https://www.google.com">Google</option>
+        <option value="about:blank">Пустая</option>
+      </select>
+    </div>
+
+    <h3 style="margin-top: 20px;">Темы</h3>
     <button class="theme-btn" onclick="setTheme('dark')">🌙 Тёмная</button>
     <button class="theme-btn" onclick="setTheme('light')">☀️ Светлая</button>
     <button class="theme-btn" onclick="setTheme('hamster')">🐹 Хомячья</button>
+
+    <button class="reset-btn" onclick="resetSettings()">Сбросить настройки</button>
   </div>
 
   <div class="content-area" id="contentArea"></div>
@@ -70,11 +113,40 @@
     const settingsPanel = document.getElementById('settingsPanel');
     let activeTabId = null;
 
+    function getSetting(key, defaultValue) {
+      const val = localStorage.getItem(key);
+      return val !== null ? val : defaultValue;
+    }
+
+    function changeSearchEngine(value) {
+      localStorage.setItem('searchEngine', value);
+    }
+
+    function changeStartPage(value) {
+      localStorage.setItem('startPage', value);
+    }
+
+    function getStartPage() {
+      return getSetting('startPage', 'start.html');
+    }
+
+    function resetSettings() {
+      localStorage.clear();
+      document.body.setAttribute('data-theme', 'dark');
+      document.getElementById('searchEngineSelect').value = 'duckduckgo';
+      document.getElementById('startPageSelect').value = 'start.html';
+      alert('Настройки сброшены!');
+    }
+
+    window.addEventListener('load', () => {
+      document.getElementById('searchEngineSelect').value = getSetting('searchEngine', 'duckduckgo');
+      document.getElementById('startPageSelect').value = getSetting('startPage', 'start.html');
+    });
+
     function createTab(url) {
       tabCount++;
       const tabId = 'tab-' + tabCount;
       
-      // Создаем визуальную вкладку
       const tabEl = document.createElement('div');
       tabEl.className = 'tab';
       tabEl.id = 'tab-el-' + tabId;
@@ -82,12 +154,10 @@
       tabEl.onclick = () => switchTab(tabId);
       tabsBar.insertBefore(tabEl, tabsBar.lastElementChild);
 
-      // Создаем webview
       const webview = document.createElement('webview');
       webview.id = tabId;
       webview.src = url;
       
-      // Слушаем события, чтобы менять название и URL
       webview.addEventListener('did-navigate', (e) => {
         if (activeTabId === tabId) urlInput.value = e.url;
       });
@@ -101,72 +171,75 @@
     }
 
     function switchTab(tabId) {
-      // Убираем активный класс со всех
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('webview').forEach(w => w.classList.remove('active'));
       
-      // Ставим активный
       document.getElementById('tab-el-' + tabId).classList.add('active');
       const webview = document.getElementById(tabId);
       webview.classList.add('active');
       
-      // Обновляем адресную строку
       urlInput.value = webview.getURL() || webview.src;
       activeTabId = tabId;
     }
 
     function closeTab(tabId, event) {
-      event.stopPropagation(); // Чтобы не переключилось на закрываемую вкладку
-      const tabEl = document.getElementById('tab-el-' + tabId);
-      const webview = document.getElementById(tabId);
-      tabEl.remove();
-      webview.remove();
+      event.stopPropagation();
+      document.getElementById('tab-el-' + tabId).remove();
+      document.getElementById(tabId).remove();
       
-      // Если закрыли активную, переключаемся на первую попавшуюся
       if (activeTabId === tabId) {
         const remainingTabs = document.querySelectorAll('.tab');
         if (remainingTabs.length > 0) {
           switchTab(remainingTabs[0].id.replace('tab-el-', ''));
         } else {
-          createTab('https://www.google.com');
+          createTab(getStartPage());
         }
       }
     }
 
+    function getActiveWebview() { return document.querySelector('webview.active'); }
+
     function navigate() {
       const val = urlInput.value.trim();
-      const webview = document.getElementById(activeTabId);
+      const webview = getActiveWebview();
       if (!val || !webview) return;
 
-      if (val.startsWith('http')) webview.src = val;
-      else if (val.includes('.') && !val.includes(' ')) webview.src = 'https://' + val;
-      else webview.src = 'https://www.google.com/search?q=' + encodeURIComponent(val);
+      if (val.startsWith('http')) {
+        webview.src = val;
+      } else if (val.includes('.') && !val.includes(' ')) {
+        webview.src = 'https://' + val;
+      } else {
+        const engine = getSetting('searchEngine', 'duckduckgo');
+        let searchUrl = '';
+        
+        if (engine === 'google') {
+          searchUrl = 'https://www.google.com/search?q=';
+        } else if (engine === 'yandex') {
+          searchUrl = 'https://yandex.ru/search/?text=';
+        } else {
+          searchUrl = 'https://duckduckgo.com/?q=';
+        }
+        
+        webview.src = searchUrl + encodeURIComponent(val);
+      }
     }
 
     function handleKeyPress(e) { if (e.key === 'Enter') navigate(); }
-    
-    function goBack() { const w = document.getElementById(activeTabId); if (w && w.canGoBack()) w.goBack(); }
-    function goForward() { const w = document.getElementById(activeTabId); if (w && w.canGoForward()) w.goForward(); }
-    function reloadPage() { const w = document.getElementById(activeTabId); if (w) w.reload(); }
-    function goHome() { const w = document.getElementById(activeTabId); if (w) w.src = 'https://www.google.com'; }
-
-    function toggleSettings() {
-      settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block';
+    function goBack() { const w = getActiveWebview(); if (w && w.canGoBack()) w.goBack(); }
+    function goForward() { const w = getActiveWebview(); if (w && w.canGoForward()) w.goForward(); }
+    function reloadPage() { const w = getActiveWebview(); if (w) w.reload(); }
+    function goHome() { 
+      const w = getActiveWebview(); 
+      if (w) { 
+        w.src = getStartPage(); 
+        urlInput.value = getStartPage(); 
+      } 
     }
 
-    function setTheme(theme) {
-      document.body.setAttribute('data-theme', theme);
-      settingsPanel.style.display = 'none';
-    }
+    function toggleSettings() { settingsPanel.style.display = settingsPanel.style.display === 'block' ? 'none' : 'block'; }
+    function setTheme(theme) { document.body.setAttribute('data-theme', theme); settingsPanel.style.display = 'none'; }
 
-    document.addEventListener('click', function(event) {
-      if (!settingsPanel.contains(event.target) && !event.target.closest('button[title="Настройки"]') && event.target.innerHTML !== '⚙️') {
-        settingsPanel.style.display = 'none';
-      }
-    });
-
-    // Создаем первую вкладку при запуске
-    window.onload = () => createTab('https://www.google.com');
+    window.onload = () => createTab(getStartPage());
   </script>
 </body>
 </html>

@@ -24,5 +24,10 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     }
+  },
+  "dependencies": {
+    "gigachat": "^0.0.20",
+    "lowdb": "^7.0.1",
+    "sqlite3": "^6.0.1"
   }
 }

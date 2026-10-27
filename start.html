@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      margin: 0;
+      background: #202124;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #e8eaed;
+    }
+    .logo-text {
+      font-size: 72px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 30px;
+      letter-spacing: 3px;
+    }
+    .search-box {
+      width: 600px;
+      display: flex;
+      background: #292a2d;
+      border: 1px solid #3c4043;
+      border-radius: 30px;
+      padding: 10px 20px;
+      transition: border 0.3s, box-shadow 0.3s;
+    }
+    .search-box:focus-within {
+      border-color: #8ab4f8;
+      box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.2);
+    }
+    input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #e8eaed;
+      font-size: 18px;
+      outline: none;
+    }
+    button {
+      background: #8ab4f8;
+      color: #202124;
+      border: none;
+      border-radius: 20px;
+      padding: 0 20px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #aecbfa;
+    }
+    .links {
+      margin-top: 40px;
+      display: flex;
+      gap: 20px;
+    }
+    .links a {
+      color: #8ab4f8;
+      text-decoration: none;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+    .links a:hover { opacity: 1; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="logo-text">Hrum</div>
+  
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Поиск в Hrum..." onkeypress="handleSearch(event)">
+    <button onclick="doSearch()">Найти</button>
+  </div>
+
+  <div class="links">
+    <a href="https://www.youtube.com" target="_self">YouTube</a>
+    <a href="https://vk.com" target="_self">ВКонтакте</a>
+    <a href="https://github.com" target="_self">GitHub</a>
+    <a href="https://mail.ru" target="_self">Почта</a>
+  </div>
+
+  <script>
+    function doSearch() {
+      const query = document.getElementById('searchInput').value.trim();
+      if (!query) return;
+      
+      // Отправляем запрос в DuckDuckGo (он не так сильно следит, как Google)
+      // Если хочешь Яндекс, замени ссылку на: https://yandex.ru/search/?text=
+      const url = 'https://duckduckgo.com/?q=' + encodeURIComponent(query);
+      
+      window.location.href = url;
+    }
+
+    function handleSearch(e) {
+      if (e.key === 'Enter') doSearch();
+    }
+  </script>
+</body>
+</html>

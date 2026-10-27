@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { background: #202124; color: #e8eaed; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .auth-box { background: #292a2d; padding: 30px; border-radius: 10px; width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    h2 { text-align: center; }
+    input { width: 100%; padding: 10px; margin: 8px 0; background: #202124; border: 1px solid #3c4043; color: white; border-radius: 5px; box-sizing: border-box; }
+    button { width: 100%; padding: 10px; background: #8ab4f8; color: #202124; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #aecbfa; }
+    .hidden { display: none; }
+    .error { color: #ff8a80; font-size: 13px; text-align: center; margin-top: 5px; }
+    .success { color: #a5d6a7; font-size: 13px; text-align: center; margin-top: 5px; }
+    .switch-link { display: block; text-align: center; margin-top: 15px; color: #8ab4f8; cursor: pointer; font-size: 14px; }
+    .switch-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="auth-box">
+    <!-- БЛОК ВХОДА -->
+    <div id="loginBlock">
+      <h2>Вход в Hrum</h2>
+      <input type="text" id="loginName" placeholder="Имя или Gmail">
+      <input type="password" id="loginPass" placeholder="Пароль">
+      <button onclick="doLogin()">Войти</button>
+      <div id="loginMsg" class="error"></div>
+      <span class="switch-link" onclick="switchToRegister()">Нет аккаунта? Создать</span>
+    </div>
+
+    <!-- БЛОК РЕГИСТРАЦИИ -->
+    <div id="registerBlock" class="hidden">
+      <h2>Создать аккаунт</h2>
+      <input type="text" id="regName" placeholder="Имя пользователя">
+      <input type="email" id="regEmail" placeholder="Gmail (example@gmail.com)">
+      <input type="password" id="regPass" placeholder="Пароль">
+      <button onclick="doRegister()">Зарегистрироваться</button>
+      <div id="regMsg" class="error"></div>
+      <span class="switch-link" onclick="switchToLogin()">Уже есть аккаунт? Войти</span>
+    </div>
+
+    <!-- БЛОК ПОДТВЕРЖДЕНИЯ -->
+    <div id="verifyBlock" class="hidden">
+      <h2>Подтверждение</h2>
+      <p style="font-size: 14px; text-align: center;">Введите код, который мы "отправили" на Gmail.</p>
+      <input type="text" id="verifyCode" placeholder="4-значный код">
+      <button onclick="doVerify()">Подтвердить</button>
+      <div id="verifyMsg" class="error"></div>
+    </div>
+
+    <!-- БЛОК ПРОФИЛЯ -->
+    <div id="profileBlock" class="hidden">
+      <h2>Личный кабинет</h2>
+      <p style="text-align: center;">Вы вошли как: <b id="profileName"></b></p>
+      <button onclick="logout()">Выйти</button>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+    let pendingEmail = '';
+
+    function doLogin() {
+      const name = document.getElementById('loginName').value;
+      const pass = document.getElementById('loginPass').value;
+      if (!name || !pass) {
+        alert('Заполните все поля!');
+        return;
+      }
+      
+      ipcRenderer.invoke('login', name, pass).then(res => {
+        const msg = document.getElementById('loginMsg');
+        if (res.success) {
+          msg.className = 'success';
+          msg.innerText = res.message;
+          showProfile(res.user.username);
+        } else {
+          msg.className = 'error';
+          msg.innerText = res.message;
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Ошибка: ' + err.message);
+      });
+    }
+
+    function doRegister() {
+      const username = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPass').value;
+      
+      if (!username || !email || !password) {
+        alert('Заполните все поля!');
+        return;
+      }
+
+      if (!email.endsWith('@gmail.com')) {
+        const msg = document.getElementById('regMsg');
+        msg.className = 'error';
+        msg.innerText = 'Пожалуйста, используйте почту Gmail (example@gmail.com)';
+        return;
+      }
+
+      ipcRenderer.invoke('register', { username, email, password }).then(res => {
+        const msg = document.getElementById('regMsg');
+        if (res.success) {
+          msg.className = 'success';
+          msg.innerText = res.message;
+          alert('ТЕСТОВЫЙ РЕЖИМ: Ваш код подтверждения: ' + res.code);
+          pendingEmail = email;
+          switchToVerify();
+        } else {
+          msg.className = 'error';
+          msg.innerText = res.message;
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Ошибка: ' + err.message);
+      });
+    }
+
+    function doVerify() {
+      const code = document.getElementById('verifyCode').value;
+      if (!code) {
+        alert('Введите код!');
+        return;
+      }
+
+      ipcRenderer.invoke('verify', pendingEmail, code).then(res => {
+        const msg = document.getElementById('verifyMsg');
+        if (res.success) {
+          msg.className = 'success';
+          msg.innerText = res.message;
+          setTimeout(() => switchToLogin(), 1500);
+        } else {
+          msg.className = 'error';
+          msg.innerText = res.message;
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Ошибка: ' + err.message);
+      });
+    }
+
+    function hideAll() {
+      ['loginBlock', 'registerBlock', 'verifyBlock', 'profileBlock'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    }
+    function switchToLogin() { hideAll(); document.getElementById('loginBlock').classList.remove('hidden'); }
+    function switchToRegister() { hideAll(); document.getElementById('registerBlock').classList.remove('hidden'); }
+    function switchToVerify() { hideAll(); document.getElementById('verifyBlock').classList.remove('hidden'); }
+    function showProfile(name) { hideAll(); document.getElementById('profileName').innerText = name; document.getElementById('profileBlock').classList.remove('hidden'); }
+    function logout() { switchToLogin(); }
+  </script>
+</body>
+</html>
