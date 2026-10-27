@@ -1,2 +1,6 @@
 node_modules/ 
 dist/ 
+users.json 
+hrum.db 
+HrumData/ 
+auth.html 
